@@ -5,4 +5,4 @@
 *    Ecoute port 80, récption requêtes
 *    Soudures des composants (audio shield, leds)
 *    Fonctionnement led On/Off et led Wifi
-*    Ecoute en boucle de la même musique
+*    Ecoute automatique de la playlist, et en entière
