@@ -201,21 +201,21 @@ void playMusicsFromPlaylist() {
   File dir = SD.open("/");
   File entry;
   if (musicPlayer.stopped()) {
-     while(count < countMusic + 3) {
+     while(count < countMusic + 2) {
        entry =  dir.openNextFile();
        if (!entry) {
          // no more files
          break;
        }
 
-       if(count != (countMusic + 3 - 1)) {
+       if(count != (countMusic + 2 - 1)) {
           entry.close();
        }
        
        count++;
     }
 
-    if (!entry.isDirectory()) {
+    if (entry && !entry.isDirectory()) {
           Serial.println(entry.name());
           musicPlayer.startPlayingFile(entry.name());
           countMusic++;
