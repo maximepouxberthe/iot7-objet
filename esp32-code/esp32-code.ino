@@ -29,6 +29,8 @@ uint8_t brightness = 255;   // 255 is maximum brightness, but can be changed.  M
 
 int countMusic = 1;         // numéro musique à jouer en première dans la playlist
 
+const double sizeCard = 16000000000;
+
 Adafruit_VS1053_FilePlayer musicPlayer = 
   Adafruit_VS1053_FilePlayer(VS1053_RESET, VS1053_CS, VS1053_DCS, VS1053_DREQ, CARDCS);
 
@@ -100,6 +102,8 @@ void setupSD() {
   
   // liste les fichiers sur la carte sd
   printDirectory(SD.open("/"), 0);
+
+  gestionLEDStockageSD();
 }
 
 
@@ -138,6 +142,7 @@ void loop() {
     listenForClients();
   }
 
+  gestionLEDStockageSD();
   playMusicsFromPlaylist();
 
   delay(500);
@@ -196,19 +201,57 @@ void listenForClients() {
 }
 
 
+
+void gestionLEDStockageSD() {
+  double capaciteOccupe = calculStockageDirectory(SD.open("/"));
+  double capaciteRestante = sizeCard - capaciteOccupe;
+  Serial.print(capaciteRestante/1000000);
+  Serial.print(" Mo");
+  Serial.print(" = ");
+  Serial.print(sizeCard/1000000);
+  Serial.print(" Mo");
+  Serial.print(" - ");
+  Serial.print(capaciteOccupe/1000000);
+  Serial.println(" Mo");
+
+  RGB_color((capaciteOccupe/1000000)/63, 255 - (capaciteOccupe/1000000)/63, 0);
+}
+
+int calculStockageDirectory(File dir) {
+  int stockage = 0;
+  while(true) {
+     File entry =  dir.openNextFile();
+     if (! entry) {
+       // no more files
+       break;
+     }
+     
+     if (entry.isDirectory()) {
+       stockage = stockage + calculStockageDirectory(entry);
+     } else {
+       // files have sizes, directories do not
+       stockage = stockage + entry.size();
+     }
+     entry.close();
+   }
+
+   return stockage;
+}
+
+
 void playMusicsFromPlaylist() {
   int count = 0;
   File dir = SD.open("/");
   File entry;
   if (musicPlayer.stopped()) {
-     while(count < countMusic + 2) {
+     while(count < countMusic + 3) {
        entry =  dir.openNextFile();
        if (!entry) {
          // no more files
          break;
        }
 
-       if(count != (countMusic + 2 - 1)) {
+       if(count != (countMusic + 3 - 1)) {
           entry.close();
        }
        
@@ -228,11 +271,16 @@ void playMusicsFromPlaylist() {
 
 void addMusicToSDCard() {
   // digitalWrite(27, HIGH);               // GET /H turns the LED on
+
+  gestionLEDStockageSD();
 }
 
 
 void getStorageCard() {
   // digitalWrite(27, LOW);                // GET /L turns the LED off
+
+  double capaciteOccupe = calculStockageDirectory(SD.open("/"));
+  double capaciteRestante = sizeCard - capaciteOccupe;
 }
 
 
