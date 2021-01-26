@@ -25,9 +25,9 @@ const boolean invert = false; // set true if common anode, false if common catho
 
 uint8_t color = 0;          // a value from 0 to 255 representing the hue
 uint32_t R, G, B;           // the Red Green and Blue color components
-uint8_t brightness = 255;  // 255 is maximum brightness, but can be changed.  Might need 256 for common anode to fully turn off.
+uint8_t brightness = 255;   // 255 is maximum brightness, but can be changed.  Might need 256 for common anode to fully turn off.
 
-int countMusic = 1; // numéro musique à jouer en première dans la playlist
+int countMusic = 1;         // numéro musique à jouer en première dans la playlist
 
 Adafruit_VS1053_FilePlayer musicPlayer = 
   Adafruit_VS1053_FilePlayer(VS1053_RESET, VS1053_CS, VS1053_DCS, VS1053_DREQ, CARDCS);
@@ -197,16 +197,31 @@ void listenForClients() {
 
 
 void playMusicsFromPlaylist() {
-  String music_title = "Playing full track ";
-  String music_name = "/track";
-  String music_extension = ".mp3";
-  const char *music = (music_name + countMusic + music_extension).c_str();
+  int count = 0;
+  File dir = SD.open("/");
+  File entry;
   if (musicPlayer.stopped()) {
-    // Play a file in the background
-    Serial.println(music_title + countMusic + "");
-    musicPlayer.startPlayingFile("/track2.mp3");
-    delay(500);
-    //countMusic++;
+     while(count < countMusic + 3) {
+       entry =  dir.openNextFile();
+       if (!entry) {
+         // no more files
+         break;
+       }
+
+       if(count != (countMusic + 3 - 1)) {
+          entry.close();
+       }
+       
+       count++;
+    }
+
+    if (!entry.isDirectory()) {
+          Serial.println(entry.name());
+          musicPlayer.startPlayingFile(entry.name());
+          countMusic++;
+     }
+     entry.close();
+     delay(500);
   }
 }
 
